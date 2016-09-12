@@ -89,11 +89,34 @@ bool TrimeshFace::intersect(ray& r, isect& i) const {
 // intersection in u (alpha) and v (beta).
 bool TrimeshFace::intersectLocal(ray& r, isect& i) const
 {
-    // YOUR CODE HERE9
-    // 
-    // FIXME: Add ray-trimesh intersection
+    // Calculate points A, B and C
+    glm::dvec3 a = parent->vertices[ids[0]];
+    glm::dvec3 b = parent->vertices[ids[1]];
+    glm::dvec3 c = parent->vertices[ids[2]];
 
-    return false;
+    // For our ray, p(t) = (P + td), we can solve for t and get: t = -(n*P * d)/(n*d)
+    i.t = -(glm::dot(normal, r.p) + dist)/(glm::dot(normal, r.d));
+    glm::dvec3 p = r.p + i.t*r.d; // Value of p(i.t)
+
+    // Cramer's rule solution set:
+    glm::dmat3x3 denominator = {{a.x,b.x,c.x},{a.y,b.y,c.y},{1,1,1}};
+    glm::dmat3x3 alphaNumerator = denominator;
+    glm::dmat3x3 betaNumerator = denominator;
+
+    alphaNumerator[0][0] = betaNumerator[0][1] = p.x;
+    alphaNumerator[1][0] = betaNumerator[1][1] = p.y;
+
+    double alpha = glm::determinant(alphaNumerator)/glm::determinant(denominator);
+    double beta = glm::determinant(betaNumerator)/glm::determinant(denominator);
+
+    bool intersects = alpha >= 0 && alpha <= 1 && beta >=0 && beta <= 1;
+
+    if(intersects) {
+        i.uvCoordinates.x = alpha;
+        i.uvCoordinates.y = beta;
+    }
+
+    return intersects;
 }
 
 void Trimesh::generateNormals()
