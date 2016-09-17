@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <assert.h>
 #include <string.h>
+#include <iostream>
 #include "trimesh.h"
 #include "../ui/TraceUI.h"
 extern TraceUI* traceUI;
@@ -95,7 +96,7 @@ bool TrimeshFace::intersectLocal(ray& r, isect& i) const
     glm::dvec3 c = parent->vertices[ids[2]];
 
     // For our ray, p(t) = (P + td), we can solve for t and get: t = -(n*P * d)/(n*d)
-    i.t = -(glm::dot(normal, r.p) + dist)/(glm::dot(normal, r.d));
+    double t = -(glm::dot(normal, r.p) + dist)/(glm::dot(normal, r.d));
     glm::dvec3 p = r.p + i.t*r.d; // Value of p(i.t)
 
     // Cramer's rule solution set:
@@ -109,9 +110,10 @@ bool TrimeshFace::intersectLocal(ray& r, isect& i) const
     double alpha = glm::determinant(alphaNumerator)/glm::determinant(denominator);
     double beta = glm::determinant(betaNumerator)/glm::determinant(denominator);
 
-    bool intersects = alpha >= 0 && alpha <= 1 && beta >=0 && beta <= 1;
-
+    bool intersects = t >=0 && alpha >= 0 && alpha <= 1 && beta >=0 && beta <= 1;
+    
     if(intersects) {
+        i.t = t;
         i.uvCoordinates.x = alpha;
         i.uvCoordinates.y = beta;
     }
