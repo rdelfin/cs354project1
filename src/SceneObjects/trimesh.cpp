@@ -111,11 +111,12 @@ bool TrimeshFace::intersectLocal(ray& r, isect& i) const
     double beta = glm::determinant(betaNumerator)/glm::determinant(denominator);
 
     bool intersects = t >=0 && alpha >= 0 && alpha <= 1 && beta >=0 && beta <= 1;
-    
+
     if(intersects) {
         i.t = t;
         i.uvCoordinates.x = alpha;
         i.uvCoordinates.y = beta;
+        i.material = new Material(*material);
     }
 
     return intersects;
