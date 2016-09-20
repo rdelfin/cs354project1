@@ -95,9 +95,17 @@ bool TrimeshFace::intersectLocal(ray& r, isect& i) const
     glm::dvec3 b = parent->vertices[ids[1]];
     glm::dvec3 c = parent->vertices[ids[2]];
 
+    // Special case when ray and plane are parallel.
+    if(glm::dot(normal, r.d) == 0)
+        return false;
+
     // For our ray, p(t) = (P + td), we can solve for t and get: t = -(n*P * d)/(n*d)
     double t = -(glm::dot(normal, r.p) + dist)/(glm::dot(normal, r.d));
+
     glm::dvec3 p = r.p + i.t*r.d; // Value of p(i.t)
+
+    glm::dvec3 u = c - a;
+    glm::dvec3 v = c - b;
 
     // Cramer's rule solution set:
     glm::dmat3x3 denominator = {{a.x,b.x,c.x},{a.y,b.y,c.y},{1,1,1}};
@@ -111,6 +119,10 @@ bool TrimeshFace::intersectLocal(ray& r, isect& i) const
     double beta = glm::determinant(betaNumerator)/glm::determinant(denominator);
 
     bool intersects = t >=0 && alpha >= 0 && alpha <= 1 && beta >=0 && beta <= 1;
+
+    std::cout << "T: " << t << ", alpha: " << alpha << ", beta: " << beta << std::endl;
+    std::cout << "r.P: (" << r.p.x << ", " << r.p.y << ", " << r.p.z << ")" << "r.d: (" << r.d.x << ", " << r.d.y << ", " << r.d.z << ")" << std::endl;
+    std::cout << "a: (" << a.x << ", " << a.y << ", " << a.z << "), b: (" << b.x << ", " << b.y << ", " << b.z << "), c: (" << c.x << ", " << c.y << ", " << c.z << ")" << ", n: (" << normal.x << ", " << normal.y << ", " << normal.z << ")" << std::endl;
 
     if(intersects) {
         i.t = t;

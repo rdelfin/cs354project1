@@ -72,6 +72,7 @@ glm::dvec3 RayTracer::traceRay(ray& r, const glm::dvec3& thresh, int depth, doub
 	glm::dvec3 colorC;
 
 	if(scene->intersect(r, i)) {
+        std::cout << "INTERSECTION with triangle" << std::endl;
 		// YOUR CODE HERE
 
 		// An intersection occurred!  We've got work to do.  For now,
