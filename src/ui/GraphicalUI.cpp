@@ -13,6 +13,7 @@
 #ifndef COMMAND_LINE_ONLY
 
 #include <FL/fl_ask.H>
+#include <iostream>
 #include "debuggingView.h"
 
 #include "GraphicalUI.h"

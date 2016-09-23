@@ -104,8 +104,8 @@ bool TrimeshFace::intersectLocal(ray& r, isect& i) const
 
     glm::dvec3 p = r.p + t*r.d; // Value of p(i.t)
 
-    glm::dvec3 u = b - a;
-    glm::dvec3 v = c - a;
+    glm::dvec3 uVec = b - a;
+    glm::dvec3 vVec = c - a;
 
     // Cramer's rule solution set:
     glm::dmat3x3 denominator = {{a.x,b.x,c.x},{a.y,b.y,c.y},{a.z,b.z,c.z}};
@@ -120,11 +120,11 @@ bool TrimeshFace::intersectLocal(ray& r, isect& i) const
     double denDet = glm::determinant(denominator);
 
 
-    double alpha = glm::determinant(alphaNumerator)/denDet;
-    double beta = glm::determinant(betaNumerator)/denDet;
-    double gamma = glm::determinant(gammaNumerator)/denDet;
+    double w = glm::determinant(alphaNumerator)/denDet;
+    double u = glm::determinant(betaNumerator)/denDet;
+    double v = glm::determinant(gammaNumerator)/denDet;
 
-    bool intersects = t >=0 && alpha >= 0 && alpha <= 1 && beta >=0 && beta <= 1;
+    bool intersects = t >=0 && u >= 0 && u <= 1 && v >=0 && v <= 1;
 
     //std::cout << "T: " << t << ", alpha: " << alpha << ", beta: " << beta << std::endl;
     //std::cout << "r.P: (" << r.p.x << ", " << r.p.y << ", " << r.p.z << ")" << "r.d: (" << r.d.x << ", " << r.d.y << ", " << r.d.z << ")" << std::endl;
@@ -132,8 +132,8 @@ bool TrimeshFace::intersectLocal(ray& r, isect& i) const
 
     if(intersects) {
         i.t = t;
-        i.uvCoordinates.x = alpha;
-        i.uvCoordinates.y = beta;
+        i.uvCoordinates.x = w;
+        i.uvCoordinates.y = u;
         i.material = new Material(*material);
     }
 
