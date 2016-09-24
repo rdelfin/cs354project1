@@ -104,28 +104,19 @@ bool TrimeshFace::intersectLocal(ray& r, isect& i) const
 
     glm::dvec3 p = r.p + t*r.d; // Value of p(i.t)
 
-    double denDet = glm::dot(a, glm::cross(b, c));
+    double cond1 = glm::dot(glm::cross(b-a, p-a), normal);
+    double cond2 = glm::dot(glm::cross(c-b, p-b), normal);
+    double cond3 = glm::dot(glm::cross(a-c, p-c), normal);
 
-
-    double alpha = glm::dot(p, glm::cross(b, c))/denDet;
-    double beta = glm::dot(a, glm::cross(p, c))/denDet;
-    double gamma = glm::dot(a, glm::cross(b, p))/denDet;
-
-    bool intersects = /*t >=0 &&*/ beta >= 0 && gamma >=0 && (beta + gamma) <= 1;
+    bool intersects = t >=0.00001 && cond1 >= 0 && cond2 >=0 && cond3 >= 0;
 
     if(intersects) {
-        std::cout << "INTERSECTS" << std::endl;
-        std::cout << "TRIANGLE: (" << a.x << ", " << a.y << ", " << a.z << "), (" << b.x << ", " << b.y << ", " << b.z << "), (" << c.x << ", " << c.y << ", " << c.z << "), " << std::endl;
-        std::cout << "RAY: P(t) = (" << r.p.x << ", " << r.p.y << ", " << r.p.z << ")" << " + (" << r.d.x << ", " << r.d.y << ", " << r.d.z << ")t" << std::endl;
-        std::cout << "t: " << t << std::endl;
-        std::cout << std::endl;
-    }
+        // Computed from the fact that det([A B C]T) = A . (B x C), and det([A B C]) = det([A B C]T)
+        double denDet = glm::dot(a, glm::cross(b, c));
+        double alpha = glm::dot(p, glm::cross(b, c))/denDet;
+        double beta = glm::dot(a, glm::cross(p, c))/denDet;
+        double gamma = glm::dot(a, glm::cross(b, p))/denDet;
 
-    //std::cout << "T: " << t << ", alpha: " << alpha << ", beta: " << beta << std::endl;
-    //std::cout << "r.P: (" << r.p.x << ", " << r.p.y << ", " << r.p.z << ")" << "r.d: (" << r.d.x << ", " << r.d.y << ", " << r.d.z << ")" << std::endl;
-    //std::cout << "a: (" << a.x << ", " << a.y << ", " << a.z << "), b: (" << b.x << ", " << b.y << ", " << b.z << "), c: (" << c.x << ", " << c.y << ", " << c.z << ")" << ", n: (" << normal.x << ", " << normal.y << ", " << normal.z << ")" << std::endl;
-
-    if(intersects) {
         i.setBary(alpha, beta, gamma);
         i.t = t;
         i.material = new Material(*material);
