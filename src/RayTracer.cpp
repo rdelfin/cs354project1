@@ -73,12 +73,18 @@ glm::dvec3 RayTracer::traceRay(ray& r, const glm::dvec3& thresh, int depth, doub
 
 	if(scene->intersect(r, i)) {
 
+        glm::dvec3 ref = glm::normalize(r.getDirection() - 2.0*glm::dot(i.N, r.getDirection())*i.N);
+        ray refRay(r.getPosition(), ref, r.getPixel(), r.ctr, r.getAtten(), ray::REFLECTION);
+
+
+        glm::dvec3 refColor = traceRay(refRay, thresh, depth - 1, t);
+
         /*for(auto it = scene->beginLights(); it != scene->endLights(); ++it) {
             (*it)->get
         }*/
 
         Material mat = i.getMaterial();
-		colorC = mat.shade(scene, r, i) + mat.kr(i) + mat.ks(i);
+		colorC = mat.shade(scene, r, i) + mat.kr(i)* /*+ mat.ks(i)*/;
 	} else {
 		// No intersection.  This ray travels to infinity, so we color
 		// it according to the background color, which in this (simple) case
