@@ -72,31 +72,13 @@ glm::dvec3 RayTracer::traceRay(ray& r, const glm::dvec3& thresh, int depth, doub
 	glm::dvec3 colorC;
 
 	if(scene->intersect(r, i)) {
-        std::vector<Material> materials;
-
-        materials.push_back(i.getMaterial());
 
         /*for(auto it = scene->beginLights(); it != scene->endLights(); ++it) {
             (*it)->get
         }*/
 
-		// YOUR CODE HERE
-
-		// An intersection occurred!  We've got work to do.  For now,
-		// this code gets the material for the surface that was intersected,
-		// and asks that material to provide a color for the ray.  
-
-		// This is a great place to insert code for recursive ray tracing.
-		// Instead of just returning the result of shade(), add some
-		// more steps: add in the contributions from reflected and refracted
-		// rays.
-        Material totalMaterial;
-
-        for(auto it = materials.begin(); it != materials.end(); ++it) {
-            totalMaterial += *it;
-        }
-
-		colorC = totalMaterial.shade(scene, r, i);
+        Material mat = i.getMaterial();
+		colorC = mat.shade(scene, r, i) + mat.kr(i) + mat.ks(i);
 	} else {
 		// No intersection.  This ray travels to infinity, so we color
 		// it according to the background color, which in this (simple) case
