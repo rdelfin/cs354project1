@@ -34,22 +34,23 @@ glm::dvec3 Material::shade(Scene *scene, const ray& r, const isect& i) const
 		// Special case when light is being hit from behind.
 		if(nDotL < 0) continue;
 
+
+
+        glm::dvec3 ref = glm::normalize(2.0*glm::dot(i.N, lightDir)*i.N - lightDir);
+        glm::dvec3 v = glm::normalize(scene->getCamera().getEye() - point);
+
+        ray toLightRay(point, lightDir, r.getPixel(), r.ctr, r.getAtten(), ray::SHADOW);
+        glm::dvec3 attenuation = light->distanceAttenuation(point)*light->shadowAttenuation(toLightRay, point);
+
 		glm::dvec3 Il = light->getColor();
 		double lightCos = max(0.0, nDotL);
 
 		if(debugMode)
 			std::cout << "Light cos: " << lightCos << std::endl;
 
-		totalI += kd(i)*Il*lightCos;
+		totalI += kd(i)*Il*lightCos*attenuation;
 
-		glm::dvec3 ref = glm::normalize(2.0*glm::dot(i.N, lightDir)*i.N - lightDir);
-		glm::dvec3 v = glm::normalize(scene->getCamera().getEye() - point);
-		totalI += ks(i)*Il*max(0.0, pow(glm::dot(ref, v), shininess(i)));
-
-		//if(debugMode)
-		//	std::cout << "Ke: " << ke(i) << ", ka: " << ka(i) << ", kd: " << kd(i) << ", ks: " << ks << ", shininess: " << shininess(i) << std::endl;
-
-
+		totalI += ks(i)*Il*max(0.0, pow(glm::dot(ref, v), shininess(i)))*attenuation;
 	}
 
 	return totalI;
