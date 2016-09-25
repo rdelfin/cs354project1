@@ -20,7 +20,7 @@ Material::~Material()
 glm::dvec3 Material::shade(Scene *scene, const ray& r, const isect& i) const
 {
 	glm::dvec3 point = r.getPosition() + r.getDirection()*i.t;
-	glm::dvec3 totalI = kd(i) + ka(i)*scene->ambient();
+	glm::dvec3 totalI = ke(i) + ka(i)*scene->ambient();
 
 	for ( vector<Light*>::const_iterator it = scene->beginLights();
 		  it != scene->endLights();
@@ -29,18 +29,22 @@ glm::dvec3 Material::shade(Scene *scene, const ray& r, const isect& i) const
 		// Iteration two: Diffuse reflection
 		Light* light = *it;
 		glm::dvec3 lightDir = light->getDirection(point);
+		double nDotL = glm::dot(i.N, lightDir);
+
+		// Special case when light is being hit from behind.
+		if(nDotL < 0) continue;
 
 		glm::dvec3 Il = light->getColor();
-		double lightCos = max(0.0, glm::dot(i.N, lightDir));
+		double lightCos = max(0.0, nDotL);
 
 		if(debugMode)
 			std::cout << "Light cos: " << lightCos << std::endl;
 
 		totalI += kd(i)*Il*lightCos;
 
-		glm::dvec3 ref = 2.0*glm::dot(i.N, lightDir)*i.N - lightDir;
-		glm::dvec3 v = scene->getCamera().getEye() - point;
-		totalI += ks(i)*Il*max(0.0, /*pow(*/glm::dot(ref, v)/*, shininess(i))*/);
+		glm::dvec3 ref = glm::normalize(2.0*glm::dot(i.N, lightDir)*i.N - lightDir);
+		glm::dvec3 v = glm::normalize(scene->getCamera().getEye() - point);
+		totalI += ks(i)*Il*max(0.0, pow(glm::dot(ref, v), shininess(i)));
 
 		//if(debugMode)
 		//	std::cout << "Ke: " << ke(i) << ", ka: " << ka(i) << ", kd: " << kd(i) << ", ks: " << ks << ", shininess: " << shininess(i) << std::endl;
