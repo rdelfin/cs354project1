@@ -118,8 +118,9 @@ bool TrimeshFace::intersectLocal(ray& r, isect& i) const
         double gamma = glm::dot(a, glm::cross(b, p))/denDet;
 
         i.setBary(alpha, beta, gamma);
-        i.t = t;
-        i.material = new Material(*material);
+        i.setT(t);
+        i.setN(normal);
+        i.setMaterial(*material);
     }
 
     return intersects;

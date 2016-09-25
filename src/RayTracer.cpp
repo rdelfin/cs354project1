@@ -72,6 +72,14 @@ glm::dvec3 RayTracer::traceRay(ray& r, const glm::dvec3& thresh, int depth, doub
 	glm::dvec3 colorC;
 
 	if(scene->intersect(r, i)) {
+        std::vector<Material> materials;
+
+        materials.push_back(i.getMaterial());
+
+        /*for(auto it = scene->beginLights(); it != scene->endLights(); ++it) {
+            (*it)->get
+        }*/
+
 		// YOUR CODE HERE
 
 		// An intersection occurred!  We've got work to do.  For now,
@@ -82,9 +90,13 @@ glm::dvec3 RayTracer::traceRay(ray& r, const glm::dvec3& thresh, int depth, doub
 		// Instead of just returning the result of shade(), add some
 		// more steps: add in the contributions from reflected and refracted
 		// rays.
+        Material totalMaterial;
 
-		const Material& m = i.getMaterial();
-		colorC = m.shade(scene, r, i);
+        for(auto it = materials.begin(); it != materials.end(); ++it) {
+            totalMaterial += *it;
+        }
+
+		colorC = totalMaterial.shade(scene, r, i);
 	} else {
 		// No intersection.  This ray travels to infinity, so we color
 		// it according to the background color, which in this (simple) case
@@ -173,6 +185,7 @@ void RayTracer::traceSetup(int w, int h)
 		bufferSize = buffer_width * buffer_height * 3;
 		delete[] buffer;
 		buffer = new unsigned char[bufferSize];
+        printf("Creating buffer of size %d at %p\n", bufferSize, buffer);
 	}
 	memset(buffer, 0, w*h*3);
 	m_bBufferReady = true;
@@ -180,6 +193,13 @@ void RayTracer::traceSetup(int w, int h)
 
 void RayTracer::traceImage(int w, int h, int bs, double thresh)
 {
+    traceSetup(w, h);
+
+    for(unsigned int x = 0; x < w; x++) {
+        for(unsigned int y = 0; y < h; y++) {
+            tracePixel(y, x, 0);
+        }
+    }
 	// YOUR CODE HERE
 	// FIXME: Start one or more threads for ray tracing
 }

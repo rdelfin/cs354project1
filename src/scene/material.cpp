@@ -1,3 +1,4 @@
+#include <iostream>
 #include "material.h"
 #include "ray.h"
 #include "light.h"
@@ -18,34 +19,36 @@ Material::~Material()
 // the color of that point.
 glm::dvec3 Material::shade(Scene *scene, const ray& r, const isect& i) const
 {
-	// YOUR CODE HERE
+	glm::dvec3 point = r.getPosition() + r.getDirection()*i.t;
+	glm::dvec3 totalI = kd(i) + ka(i)*scene->ambient();
 
-	// For now, this method just returns the diffuse color of the object.
-	// This gives a single matte color for every distinct surface in the
-	// scene, and that's it.  Simple, but enough to get you started.
-	// (It's also inconsistent with the phong model...)
+	for ( vector<Light*>::const_iterator it = scene->beginLights();
+		  it != scene->endLights();
+ 		++it )
+	{
+		// Iteration two: Diffuse reflection
+		Light* light = *it;
+		glm::dvec3 lightDir = light->getDirection(point);
 
-	// Your mission is to fill in this method with the rest of the phong
-	// shading model, including the contributions of all the light sources.
-	// You will need to call both distanceAttenuation() and shadowAttenuation()
-	// somewhere in your code in order to compute shadows and light falloff.
-	//	if( debugMode )
-	//		std::cout << "Debugging Phong code..." << std::endl;
+		glm::dvec3 Il = light->getColor();
+		double lightCos = max(0.0, glm::dot(i.N, lightDir));
 
-	// When you're iterating through the lights,
-	// you'll want to use code that looks something
-	// like this:
-	//
-	// for ( vector<Light*>::const_iterator litr = scene->beginLights(); 
-	// 		litr != scene->endLights(); 
-	// 		++litr )
-	// {
-	// 		Light* pLight = *litr;
-	// 		.
-	// 		.
-	// 		.
-	// }
-	return kd(i);
+		if(debugMode)
+			std::cout << "Light cos: " << lightCos << std::endl;
+
+		totalI += kd(i)*Il*lightCos;
+
+		glm::dvec3 ref = 2.0*glm::dot(i.N, lightDir)*i.N - lightDir;
+		glm::dvec3 v = scene->getCamera().getEye() - point;
+		totalI += ks(i)*Il*max(0.0, /*pow(*/glm::dot(ref, v)/*, shininess(i))*/);
+
+		//if(debugMode)
+		//	std::cout << "Ke: " << ke(i) << ", ka: " << ka(i) << ", kd: " << kd(i) << ", ks: " << ks << ", shininess: " << shininess(i) << std::endl;
+
+
+	}
+
+	return totalI;
 }
 
 TextureMap::TextureMap( string filename ) {
