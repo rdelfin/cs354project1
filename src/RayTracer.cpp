@@ -99,26 +99,33 @@ glm::dvec3 RayTracer::traceRay(ray& r, const glm::dvec3& thresh, int depth, doub
             double n1 = (c < 0 ? i.getMaterial().index(i) : 1);
             double n2 = (c < 0 ? 1 : i.getMaterial().index(i));
             double rConst = n1 / n2;
-            double radical = sqrt(1 - rConst * rConst * (1 - c * c));
+            double radical = 1 - rConst * rConst * (1 - c * c);
 
             if(debugMode) {
-                std::cout << "Ks: (" << mat.kr(i).x << ", " << mat.kr(i).y << ", " << mat.kr(i).z << ")" << std::endl;
+                std::cout << "Ks: (" << mat.ks(i).x << ", " << mat.ks(i).y << ", " << mat.ks(i).z << ")" << std::endl;
                 std::cout << "Translucent:  " << (mat.Trans() ? "true" : "false") << std::endl;
                 std::cout << "Reflective:  " << (mat.Refl() ? "true" : "false") << std::endl;
+                std::cout << "Radical: " << radical << std::endl;
             }
+
 
             if (radical >= 0 && mat.Trans()) {
                 if(debugMode)
                     std::cout << "NO TOTAL INTERNAL REFRACTION " << std::endl;
 
-                glm::dvec3 T = glm::normalize(-(rConst * d + sqrt(radical) * n));
+                // For exiting rays, c < 0, so we have to use c*-1
+                glm::dvec3 altN = n;
+                if(c < 0)
+                    altN = -altN;
+
+                glm::dvec3 T = glm::normalize(-(rConst * d + sqrt(radical) * altN));
                 ray refractedRay(r.getPosition() + (i.t + eps) * r.getDirection(), T, r.getPixel(), r.ctr, r.getAtten(),
                                  ray::REFRACTION);
                 refractedColor = traceRay(refractedRay, thresh, depth - 1, t);
             }
         }
 
-		colorC = mat.shade(scene, r, i) + mat.kr(i)*reflectedColor + (glm::dvec3(1.0, 1.0, 1.0) - mat.ks(i))*refractedColor;
+		colorC = mat.shade(scene, r, i) + mat.kr(i)*reflectedColor + mat.kt(i)*refractedColor;
 	} else {
 		// No intersection.  This ray travels to infinity, so we color
 		// it according to the background color, which in this (simple) case
