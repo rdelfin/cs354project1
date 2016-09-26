@@ -27,6 +27,8 @@ extern TraceUI* traceUI;
 // in TraceGLWindow, for example.
 bool debugMode = false;
 
+double eps = 0.000001;
+
 // Trace a top-level ray through pixel(i,j), i.e. normalized window coordinates (x,y),
 // through the projection plane, and out into the scene.  All we do is
 // enter the main ray-tracing method, getting things started by plugging
@@ -72,31 +74,58 @@ glm::dvec3 RayTracer::traceRay(ray& r, const glm::dvec3& thresh, int depth, doub
 	glm::dvec3 colorC;
 
 	if(scene->intersect(r, i)) {
-        std::vector<Material> materials;
+        glm::dvec3 reflectedColor(0.0, 0.0, 0.0);
+        glm::dvec3 refractedColor(0.0, 0.0, 0.0);
+        Material mat = i.getMaterial();
 
-        materials.push_back(i.getMaterial());
+        if(depth > 0) {
 
-        /*for(auto it = scene->beginLights(); it != scene->endLights(); ++it) {
-            (*it)->get
-        }*/
+            if(debugMode)
+                std::cout << "DEPTH " << depth << std::endl;
 
-		// YOUR CODE HERE
+            // Reflection
+            if(mat.Refl()) {
+                glm::dvec3 ref = glm::normalize(r.getDirection() - 2.0 * glm::dot(i.N, r.getDirection()) * i.N);
+                ray refRay(r.getPosition() + i.t * r.getDirection() + ref * eps, ref, r.getPixel(), r.ctr, r.getAtten(),
+                           ray::REFLECTION);
+                reflectedColor = traceRay(refRay, thresh, depth - 1, t);
+            }
 
-		// An intersection occurred!  We've got work to do.  For now,
-		// this code gets the material for the surface that was intersected,
-		// and asks that material to provide a color for the ray.  
 
-		// This is a great place to insert code for recursive ray tracing.
-		// Instead of just returning the result of shade(), add some
-		// more steps: add in the contributions from reflected and refracted
-		// rays.
-        Material totalMaterial;
+            // Refraction
+            glm::dvec3 n = i.N;
+            glm::dvec3 d = -r.getDirection();
+            double c = glm::dot(n, d);
+            double n1 = (c < 0 ? i.getMaterial().index(i) : 1);
+            double n2 = (c < 0 ? 1 : i.getMaterial().index(i));
+            double rConst = n1 / n2;
+            double radical = 1 - rConst * rConst * (1 - c * c);
 
-        for(auto it = materials.begin(); it != materials.end(); ++it) {
-            totalMaterial += *it;
+            if(debugMode) {
+                std::cout << "Ks: (" << mat.ks(i).x << ", " << mat.ks(i).y << ", " << mat.ks(i).z << ")" << std::endl;
+                std::cout << "Translucent:  " << (mat.Trans() ? "true" : "false") << std::endl;
+                std::cout << "Reflective:  " << (mat.Refl() ? "true" : "false") << std::endl;
+                std::cout << "Radical: " << radical << std::endl;
+            }
+
+
+            if (radical >= 0 && mat.Trans()) {
+                if(debugMode)
+                    std::cout << "NO TOTAL INTERNAL REFRACTION " << std::endl;
+
+                // For exiting rays, c < 0, so we have to use c*-1
+                glm::dvec3 altN = n;
+                if(c < 0)
+                    altN = -altN;
+
+                glm::dvec3 T = glm::normalize(-(rConst * d + sqrt(radical) * altN));
+                ray refractedRay(r.getPosition() + (i.t + eps) * r.getDirection(), T, r.getPixel(), r.ctr, r.getAtten(),
+                                 ray::REFRACTION);
+                refractedColor = traceRay(refractedRay, thresh, depth - 1, t);
+            }
         }
 
-		colorC = totalMaterial.shade(scene, r, i);
+		colorC = mat.shade(scene, r, i) + mat.kr(i)*reflectedColor + mat.kt(i)*refractedColor;
 	} else {
 		// No intersection.  This ray travels to infinity, so we color
 		// it according to the background color, which in this (simple) case
