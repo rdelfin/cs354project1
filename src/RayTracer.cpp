@@ -229,20 +229,23 @@ void RayTracer::traceImage(int w, int h, int bs, double thresh)
             tracePixel(y, x, 0);
         }
     }
-	// YOUR CODE HERE
-	// FIXME: Start one or more threads for ray tracing
 }
 
 int RayTracer::aaImage(int samples, double aaThresh)
 {
-	// YOUR CODE HERE
-	// FIXME: Implement Anti-aliasing here
+	for(unsigned int x = 0; x < buffer_width; x++) {
+		for(unsigned int y = 0; y < buffer_width; y++) {
+			glm::dvec2 tl(x - 0.5, y + 0.5);
+			glm::dvec2 lr(x + 0.5, y + 0.5);
+			glm::dvec2 bl(x - 0.5, y - 0.5);
+			glm::dvec2 br(x + 0.5, y - 0.5);
+		}
+	}
 }
 
 bool RayTracer::checkRender()
 {
-	// YOUR CODE HERE
-	// FIXME: Return true if tracing is done.
+	// FIXME: Return true if tracing is done. (only if multithreading)
 	return true;
 }
 
