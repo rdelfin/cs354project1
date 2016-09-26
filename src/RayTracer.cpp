@@ -27,6 +27,8 @@ extern TraceUI* traceUI;
 // in TraceGLWindow, for example.
 bool debugMode = false;
 
+double eps = 0.000001;
+
 // Trace a top-level ray through pixel(i,j), i.e. normalized window coordinates (x,y),
 // through the projection plane, and out into the scene.  All we do is
 // enter the main ray-tracing method, getting things started by plugging
@@ -72,19 +74,51 @@ glm::dvec3 RayTracer::traceRay(ray& r, const glm::dvec3& thresh, int depth, doub
 	glm::dvec3 colorC;
 
 	if(scene->intersect(r, i)) {
-
-        glm::dvec3 ref = glm::normalize(r.getDirection() - 2.0*glm::dot(i.N, r.getDirection())*i.N);
-        ray refRay(r.getPosition(), ref, r.getPixel(), r.ctr, r.getAtten(), ray::REFLECTION);
-
-
-        glm::dvec3 refColor = traceRay(refRay, thresh, depth - 1, t);
-
-        /*for(auto it = scene->beginLights(); it != scene->endLights(); ++it) {
-            (*it)->get
-        }*/
-
+        glm::dvec3 reflectedColor(0.0, 0.0, 0.0);
+        glm::dvec3 refractedColor(0.0, 0.0, 0.0);
         Material mat = i.getMaterial();
-		colorC = mat.shade(scene, r, i) + mat.kr(i)* /*+ mat.ks(i)*/;
+
+        if(depth > 0) {
+
+            if(debugMode)
+                std::cout << "DEPTH " << depth << std::endl;
+
+            // Reflection
+            if(mat.Refl()) {
+                glm::dvec3 ref = glm::normalize(r.getDirection() - 2.0 * glm::dot(i.N, r.getDirection()) * i.N);
+                ray refRay(r.getPosition() + i.t * r.getDirection() + ref * eps, ref, r.getPixel(), r.ctr, r.getAtten(),
+                           ray::REFLECTION);
+                reflectedColor = traceRay(refRay, thresh, depth - 1, t);
+            }
+
+
+            // Refraction
+            glm::dvec3 n = i.N;
+            glm::dvec3 d = -r.getDirection();
+            double c = glm::dot(n, d);
+            double n1 = (c < 0 ? i.getMaterial().index(i) : 1);
+            double n2 = (c < 0 ? 1 : i.getMaterial().index(i));
+            double rConst = n1 / n2;
+            double radical = sqrt(1 - rConst * rConst * (1 - c * c));
+
+            if(debugMode) {
+                std::cout << "Ks: (" << mat.kr(i).x << ", " << mat.kr(i).y << ", " << mat.kr(i).z << ")" << std::endl;
+                std::cout << "Translucent:  " << (mat.Trans() ? "true" : "false") << std::endl;
+                std::cout << "Reflective:  " << (mat.Refl() ? "true" : "false") << std::endl;
+            }
+
+            if (radical >= 0 && mat.Trans()) {
+                if(debugMode)
+                    std::cout << "NO TOTAL INTERNAL REFRACTION " << std::endl;
+
+                glm::dvec3 T = glm::normalize(-(rConst * d + sqrt(radical) * n));
+                ray refractedRay(r.getPosition() + (i.t + eps) * r.getDirection(), T, r.getPixel(), r.ctr, r.getAtten(),
+                                 ray::REFRACTION);
+                refractedColor = traceRay(refractedRay, thresh, depth - 1, t);
+            }
+        }
+
+		colorC = mat.shade(scene, r, i) + mat.kr(i)*reflectedColor + (glm::dvec3(1.0, 1.0, 1.0) - mat.ks(i))*refractedColor;
 	} else {
 		// No intersection.  This ray travels to infinity, so we color
 		// it according to the background color, which in this (simple) case
