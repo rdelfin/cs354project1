@@ -68,8 +68,8 @@ public:
 	CubeMap* getCubeMap() { return cubemap; }
 
 private:
-	void getSamples(int x, int y, int sampleLevel, SampleMap oversampleMap);
-    glm::dvec3 getAverageColor(int x, int y, int sampleLevel, SampleMap oversampleMap);
+	void getSamples(int x, int y, int sampleLevel, SampleMap& oversampleMap);
+    glm::dvec3 getAverageColor(int x, int y, int sampleLevel, SampleMap& oversampleMap);
 
 public:
 	unsigned char *buffer;
