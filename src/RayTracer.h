@@ -11,6 +11,11 @@
 #include <thread>
 #include <queue>
 #include <glm/vec3.hpp>
+#include <unordered_map>
+#include <boost/functional/hash.hpp>
+
+
+typedef std::unordered_map<std::pair<double, double>, glm::dvec3, boost::hash< std::pair<double, double> > > SampleMap;
 
 class Scene;
 class Pixel
@@ -61,6 +66,10 @@ public:
 
 	const Scene& getScene() { return *scene; }
 	CubeMap* getCubeMap() { return cubemap; }
+
+private:
+	void getSamples(int x, int y, int sampleLevel, SampleMap& oversampleMap);
+    glm::dvec3 getAverageColor(int x, int y, int sampleLevel, SampleMap& oversampleMap);
 
 public:
 	unsigned char *buffer;

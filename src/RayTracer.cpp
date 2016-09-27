@@ -18,9 +18,12 @@
 
 #include <iostream>
 #include <fstream>
+#include <unordered_map>
 
 using namespace std;
 extern TraceUI* traceUI;
+
+
 
 // Use this variable to decide if you want to print out
 // debugging messages.  Gets set in the "trace single ray" mode
@@ -229,20 +232,70 @@ void RayTracer::traceImage(int w, int h, int bs, double thresh)
             tracePixel(y, x, 0);
         }
     }
-	// YOUR CODE HERE
-	// FIXME: Start one or more threads for ray tracing
 }
 
 int RayTracer::aaImage(int samples, double aaThresh)
 {
-	// YOUR CODE HERE
-	// FIXME: Implement Anti-aliasing here
+    SampleMap oversampleMap;
+
+	for(unsigned int x = 0; x < buffer_width; x++) {
+		for(unsigned int y = 0; y < buffer_width; y++) {
+			getSamples(x, y, samples, oversampleMap);
+            glm::dvec3 color = getAverageColor(x, y, samples, oversampleMap);
+			//if(debugMode)
+			//	std::cout << "Color of (" << x << ", " << y << ") is (" << color.r << ", " << color.g << ", " << color.b << ")" << std::endl;
+            setPixel(x, y, color);
+		}
+	}
+}
+
+// This method gets (sampleLevel + 1)^2 additional samples within the pixel (x,y) pixel.
+void RayTracer::getSamples(int x, int y, int sampleLevel, SampleMap& oversampleMap) {
+    for(int i = 0; i <= sampleLevel; i++) {
+        for(int j = 0; j <= sampleLevel; j++) {
+            double xSample = (double)x - 0.5 + (double)i/sampleLevel;
+            double ySample = (double)y - 0.5 + (double)j/sampleLevel;
+
+            // Check if sample exists already. If not, compute
+            if(oversampleMap.find({xSample, ySample}) == oversampleMap.end()) {
+
+                double xNormal = xSample / buffer_width;
+                double yNormal = ySample / buffer_height;
+
+                glm::dvec3 color(0, 0, 0);
+
+                unsigned char pixel[3] = {0, 0, 0};
+                color = trace(xNormal, yNormal, pixel, 0);
+
+                // Isn't C++11 beautiful?
+                oversampleMap[{xSample, ySample}] = color;
+            }
+        }
+    }
+}
+
+// This function gets all oversamples in the function and computes an average
+glm::dvec3 RayTracer::getAverageColor(int x, int y, int sampleLevel, SampleMap& oversampleMap) {
+    glm::dvec3 color(0, 0, 0);
+
+    for(int i = 0; i <= sampleLevel; i++) {
+        for(int j = 0; j <= sampleLevel; j++) {
+            double xSample = (double) x - 0.5 + (double) i / sampleLevel;
+            double ySample = (double) y - 0.5 + (double) j / sampleLevel;
+
+            color += oversampleMap[{xSample, ySample}] / pow(sampleLevel + 1, 2);
+
+            if (oversampleMap[{xSample, ySample}] != glm::dvec3(0, 0, 0)) {
+                glm::dvec3 clr = oversampleMap[{xSample, ySample}] / pow(sampleLevel + 1, 2);
+            }
+        }
+    }
+    return color;
 }
 
 bool RayTracer::checkRender()
 {
-	// YOUR CODE HERE
-	// FIXME: Return true if tracing is done.
+	// FIXME: Return true if tracing is done. (only if multithreading)
 	return true;
 }
 
