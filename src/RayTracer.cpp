@@ -18,9 +18,12 @@
 
 #include <iostream>
 #include <fstream>
+#include <unordered_map>
 
 using namespace std;
 extern TraceUI* traceUI;
+
+
 
 // Use this variable to decide if you want to print out
 // debugging messages.  Gets set in the "trace single ray" mode
@@ -233,14 +236,55 @@ void RayTracer::traceImage(int w, int h, int bs, double thresh)
 
 int RayTracer::aaImage(int samples, double aaThresh)
 {
+    SampleMap oversampleMap;
+
 	for(unsigned int x = 0; x < buffer_width; x++) {
 		for(unsigned int y = 0; y < buffer_width; y++) {
-			glm::dvec2 tl(x - 0.5, y + 0.5);
-			glm::dvec2 lr(x + 0.5, y + 0.5);
-			glm::dvec2 bl(x - 0.5, y - 0.5);
-			glm::dvec2 br(x + 0.5, y - 0.5);
+			getSamples(x, y, samples, oversampleMap);
+            glm::dvec3 color = getAverageColor(x, y, samples, oversampleMap);
+            setPixel(x, y, color);
 		}
 	}
+}
+
+// This method gets (sampleLevel + 1)^2 additional samples within the pixel (x,y) pixel.
+void RayTracer::getSamples(int x, int y, int sampleLevel, SampleMap oversampleMap) {
+    for(int i = 0; i <= sampleLevel; i++) {
+        for(int j = 0; j <= sampleLevel; j++) {
+            double xSample = x - 0.5 + i/sampleLevel;
+            double ySample = y - 0.5 + i/sampleLevel;
+
+            // Check if sample exists already. If not, compute
+            if(oversampleMap.find({xSample, ySample}) == oversampleMap.end()) {
+
+                double xNormal = xSample / buffer_width;
+                double yNormal = ySample / buffer_height;
+
+                glm::dvec3 color(0, 0, 0);
+
+                unsigned char pixel[3] = {0, 0, 0};
+                color = trace(xNormal, yNormal, pixel, 0);
+
+                // Isn't C++11 beautiful?
+                oversampleMap[{xSample, ySample}] = color;
+            }
+        }
+    }
+}
+
+// This function gets all oversamples in the function and computes an average
+glm::dvec3 RayTracer::getAverageColor(int x, int y, int sampleLevel, SampleMap oversampleMap) {
+    glm::dvec3 color(0, 0, 0);
+
+    for(int i = 0; i <= sampleLevel; i++) {
+        for(int j = 0; j <= sampleLevel; j++) {
+            double xSample = x - 0.5 + i/sampleLevel;
+            double ySample = y - 0.5 + i/sampleLevel;
+
+            color += oversampleMap[{xSample, ySample}] / pow(sampleLevel + 1, 2);
+        }
+    }
+    return color;
 }
 
 bool RayTracer::checkRender()
