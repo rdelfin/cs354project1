@@ -37,7 +37,8 @@ glm::dvec3 Material::shade(Scene *scene, const ray& r, const isect& i) const
 
 
         glm::dvec3 ref = glm::normalize(2.0*glm::dot(i.N, lightDir)*i.N - lightDir);
-        glm::dvec3 v = glm::normalize(scene->getCamera().getEye() - point);
+        //glm::dvec3 v = glm::normalize(scene->getCamera().getEye() - point);
+        glm::dvec3 v = -glm::normalize(r.d);
         ray toLightRay(point, lightDir, r.getPixel(), r.ctr, r.getAtten(), ray::SHADOW);
         glm::dvec3 attenuation = light->distanceAttenuation(point)*light->shadowAttenuation(toLightRay, point);
 
