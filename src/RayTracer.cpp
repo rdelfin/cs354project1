@@ -130,7 +130,10 @@ glm::dvec3 RayTracer::traceRay(ray& r, const glm::dvec3& thresh, int depth, doub
 
 		colorC = mat.shade(scene, r, i) + mat.kr(i)*reflectedColor + mat.kt(i)*refractedColor;
 	} else {
-		colorC = getCubeMap()->getColor(r);
+        if(haveCubeMap())
+		    colorC = getCubeMap()->getColor(r);
+        else
+            colorC = glm::dvec3(0, 0, 0);
 	}
 	return colorC;
 }
