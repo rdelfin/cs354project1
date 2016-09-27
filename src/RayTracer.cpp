@@ -130,13 +130,10 @@ glm::dvec3 RayTracer::traceRay(ray& r, const glm::dvec3& thresh, int depth, doub
 
 		colorC = mat.shade(scene, r, i) + mat.kr(i)*reflectedColor + mat.kt(i)*refractedColor;
 	} else {
-		// No intersection.  This ray travels to infinity, so we color
-		// it according to the background color, which in this (simple) case
-		// is just black.
-		// 
-		// FIXME: Add CubeMap support here.
-
-		colorC = glm::dvec3(0.0, 0.0, 0.0);
+        if(haveCubeMap())
+		    colorC = getCubeMap()->getColor(r);
+        else
+            colorC = glm::dvec3(0, 0, 0);
 	}
 	return colorC;
 }
