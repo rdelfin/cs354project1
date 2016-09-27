@@ -13,6 +13,7 @@
 #include <glm/vec3.hpp>
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
+#include <thread>
 
 
 typedef std::unordered_map<std::pair<double, double>, glm::dvec3, boost::hash< std::pair<double, double> > > SampleMap;
@@ -31,45 +32,69 @@ public:
 
 class RayTracer {
 public:
-	RayTracer();
-	~RayTracer();
+    RayTracer();
 
-	glm::dvec3 tracePixel(int i, int j, unsigned int ctr);
-	glm::dvec3 trace(double x, double y, unsigned char *pixel, unsigned int ctr);
-	glm::dvec3 traceRay(ray& r, const glm::dvec3& thresh, int depth, double& length);
+    ~RayTracer();
 
-	glm::dvec3 getPixel(int i, int j);
-	void setPixel(int i, int j, glm::dvec3 color);
-	void getBuffer(unsigned char *&buf, int &w, int &h);
-	double aspectRatio();
+    glm::dvec3 tracePixel(int i, int j, unsigned int ctr);
 
-	void traceImage(int w, int h, int bs, double thresh);
-	int aaImage(int samples, double aaThresh);
-	bool checkRender();
+    glm::dvec3 trace(double x, double y, unsigned char *pixel, unsigned int ctr);
 
-	void traceSetup( int w, int h );
-	void setThreshold(double th) { thresh = th; }
-	void setaaThreshold(double th) { aaThresh = th; }
-	void setThreads(int th) { threads = (unsigned) th; }
-	void setSamples(int num) { samples = num; }
-	void setCubeMap(CubeMap* m) {
-		if (cubemap) delete cubemap;
-		cubemap = m;
-	}
+    glm::dvec3 traceRay(ray &r, const glm::dvec3 &thresh, int depth, double &length);
 
-	bool loadScene( char* fn );
-	bool sceneLoaded() { return scene != 0; }
-	bool haveCubeMap() { return cubemap != 0; }
+    glm::dvec3 getPixel(int i, int j);
 
-	void setReady( bool ready ) { m_bBufferReady = ready; }
-	bool isReady() const { return m_bBufferReady; }
+    void setPixel(int i, int j, glm::dvec3 color);
 
-	const Scene& getScene() { return *scene; }
-	CubeMap* getCubeMap() { return cubemap; }
+    void getBuffer(unsigned char *&buf, int &w, int &h);
+
+    double aspectRatio();
+
+    void traceImage(int w, int h, int bs, double thresh);
+
+    int aaImage(int samples, double aaThresh);
+
+    bool checkRender();
+
+    void traceSetup(int w, int h);
+
+    void setThreshold(double th) { thresh = th; }
+
+    void setaaThreshold(double th) { aaThresh = th; }
+
+    void setThreads(int th) { threads = (unsigned) th; }
+
+    void setSamples(int num) { samples = num; }
+
+    void setCubeMap(CubeMap *m) {
+        if (cubemap) delete cubemap;
+        cubemap = m;
+    }
+
+    bool loadScene(char *fn);
+
+    bool sceneLoaded() { return scene != 0; }
+
+    bool haveCubeMap() { return cubemap != 0; }
+
+    void setReady(bool ready) { m_bBufferReady = ready; }
+
+    bool isReady() const { return m_bBufferReady; }
+
+    const Scene &getScene() { return *scene; }
+
+    CubeMap *getCubeMap() { return cubemap; }
 
 private:
-	void getSamples(int x, int y, int sampleLevel, SampleMap& oversampleMap);
-    glm::dvec3 getAverageColor(int x, int y, int sampleLevel, SampleMap& oversampleMap);
+    void getSamples(int x, int y, int sampleLevel, SampleMap &oversampleMap);
+
+    glm::dvec3 getAverageColor(int x, int y, int sampleLevel, SampleMap &oversampleMap);
+
+    std::vector<std::thread> threadList;
+    std::vector<bool> threadDone;
+    std::vector<std::pair<int, int>> threadRayRange;
+
+    void traceThread(unsigned int threadIdx);
 
 public:
 	unsigned char *buffer;
