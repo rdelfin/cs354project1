@@ -27,7 +27,7 @@ glm::dvec3 CubeMap::getColor(ray r) const {
     for(int i = 0; i < 6; i++) {
         double t = 1.0 / glm::dot(normals[i], r.d);
 
-        if(minIdx == -1 || (t > 0 && t < minT)) {
+        if(t > 0 && (minIdx == -1 || t < minT)) {
             minIdx = i;
             minT = t;
         }
@@ -42,7 +42,7 @@ glm::dvec3 CubeMap::getColor(ray r) const {
     glm::dvec2 twoDProj(0, 0);
 
     if(minIdx == 0 || minIdx == 1)
-        twoDProj = glm::dvec2(-proj.z, -proj.y);
+        twoDProj = glm::dvec2(proj.z, proj.y);
     if(minIdx == 2 || minIdx == 3)
         twoDProj = glm::dvec2(proj.x, proj.z);
     if(minIdx == 4 || minIdx == 5)
