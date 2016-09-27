@@ -1,3 +1,4 @@
+#include <iostream>
 #include "cubeMap.h"
 #include "ray.h"
 #include "../ui/TraceUI.h"
@@ -41,11 +42,15 @@ glm::dvec3 CubeMap::getColor(ray r) const {
     glm::dvec2 twoDProj(0, 0);
 
     if(minIdx == 0 || minIdx == 1)
-        twoDProj = glm::dvec2(proj.y, proj.z);
+        twoDProj = glm::dvec2(-proj.z, -proj.y);
     if(minIdx == 2 || minIdx == 3)
         twoDProj = glm::dvec2(proj.x, proj.z);
     if(minIdx == 4 || minIdx == 5)
         twoDProj = glm::dvec2(proj.x, proj.y);
 
-    return tMap[minIdx]->getPixelAt(twoDProj.x, twoDProj.y);
+    glm::dvec2 uvCoord = (twoDProj + glm::dvec2(1, 1)) / 2.0;
+    int xCoord = (int)(tMap[minIdx]->getWidth()*uvCoord.x);
+    int yCoord = (int)(tMap[minIdx]->getHeight()*uvCoord.y);
+
+    return tMap[minIdx]->getPixelAt(xCoord, yCoord);
 }
