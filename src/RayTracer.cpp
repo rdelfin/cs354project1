@@ -224,11 +224,32 @@ void RayTracer::traceImage(int w, int h, int bs, double thresh)
 {
     traceSetup(w, h);
 
-    for(unsigned int x = 0; x < w; x++) {
-        for(unsigned int y = 0; y < h; y++) {
-            tracePixel(y, x, 0);
-        }
+    int size = w*h;
+    threadList.clear();
+    threadDone.clear();
+
+    for(unsigned int i = 0; i < threads; i++) {
+        std::pair<int, int>range (i* size / threads, (i+1) * size / threads);
+        if(i == threads - 1)
+            range.second = size;
+
+        threadDone.push_back(false);
+        threadRayRange.push_back(range);
+        threadList.push_back(thread(&RayTracer::traceThread, this, i));
     }
+}
+
+void RayTracer::traceThread(unsigned int threadIdx) {
+    std::pair<int, int> range = this->threadRayRange[threadIdx];
+
+    for(int i = range.first; i < range.second; i++) {
+        int x = i / buffer_width;
+        int y = i % buffer_width;
+
+        tracePixel(x, y, threadIdx);
+    }
+
+    threadDone[threadIdx] = true;
 }
 
 int RayTracer::aaImage(int samples, double aaThresh)
@@ -292,7 +313,9 @@ glm::dvec3 RayTracer::getAverageColor(int x, int y, int sampleLevel, SampleMap& 
 
 bool RayTracer::checkRender()
 {
-	// FIXME: Return true if tracing is done. (only if multithreading)
+	for(auto it = threadDone.begin(); it != threadDone.end(); ++it)
+        if(!(*it))
+            return false;
 	return true;
 }
 
