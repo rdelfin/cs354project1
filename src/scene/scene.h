@@ -31,7 +31,6 @@
 class Light;
 class Scene;
 
-template <typename Obj>
 class KdTree;
 
 class SceneElement {
@@ -256,7 +255,7 @@ public:
   // are exempt from this requirement.
   BoundingBox sceneBounds;
   
-  KdTree<Geometry>* kdtree;
+  KdTree* kdtree;
 
  public:
   // This is used for debugging purposes only.
