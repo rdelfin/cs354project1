@@ -18,8 +18,8 @@ KdNode::~KdNode() {
 
 }
 
-KdTree::KdTree(Scene *scene)
-    : scene(scene), created(false), root(nullptr) {
+KdTree::KdTree(Scene *scene, int objThreshold, int maxIterations)
+    : scene(scene), created(false), root(nullptr), objThreshold(objThreshold), maxIterations(maxIterations) {
 
 }
 
@@ -33,8 +33,36 @@ void KdTree::construct() {
     root = new KdNode(nullptr, nullptr, sceneBound);
 
     std::vector<Geometry*> objectsLeft(scene->beginObjects(), scene->endObjects());
+    setupNode(root, maxIterations);
+}
 
-    
+void KdTree::setupNode(KdNode* node, int iterationsLeft) {
+
+    BoundingBox childMax = getNextBound(node->objects, node->bounds);
+    BoundingBox childMin = remainingBoundingBox(childMax, node->bounds);
+
+    // Convention: Left is min, right is max
+    std::vector<Geometry*> leftObj, rightObj;
+
+    for(auto it = node->objects.begin(); it != node->objects.end(); ++it) {
+        if(childMax.intersects((*it)->getBoundingBox())) {
+            rightObj.push_back(*it);
+        }
+
+        if(childMin.intersects((*it)->getBoundingBox())) {
+            leftObj.push_back(*it);
+        }
+    }
+
+    node->left = new KdNode(nullptr, nullptr, childMin);
+    node->right = new KdNode(nullptr, nullptr, childMax);
+
+    if(iterationsLeft > 0) {
+        if (node->right->objects.size() > objThreshold)
+            setupNode(node->left, iterationsLeft - 1);
+        if (node->left->objects.size() > objThreshold)
+            setupNode(node->right, iterationsLeft - 1);
+    }
 }
 
 BoundingBox KdTree::getSceneBounds() {
@@ -59,6 +87,19 @@ BoundingBox KdTree::getSceneBounds() {
 }
 
 
+BoundingBox KdTree::getNextBound(std::vector<Geometry *> objects, BoundingBox bounds) {
+    //TODO: implement
+    return BoundingBox();
+}
+
+BoundingBox KdTree::remainingBoundingBox(BoundingBox rest, BoundingBox total) {
+    //TODO: Implement
+    return BoundingBox();
+}
+
 KdTree::~KdTree() {
     delete root;
 }
+
+
+
