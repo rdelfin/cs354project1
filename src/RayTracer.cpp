@@ -227,6 +227,7 @@ void RayTracer::traceImage(int w, int h, int bs, double thresh)
     int size = w*h;
     threadList.clear();
     threadDone.clear();
+    threadRayRange.clear();
 
     for(unsigned int i = 0; i < threads; i++) {
         std::pair<int, int>range (i* size / threads, (i+1) * size / threads);
@@ -254,17 +255,36 @@ void RayTracer::traceThread(unsigned int threadIdx) {
 
 int RayTracer::aaImage(int samples, double aaThresh)
 {
-    SampleMap oversampleMap;
+    int size = buffer_width*buffer_height;
+    aaThreadList.clear();
+    aaThreadDone.clear();
+    aaThreadRayRange.clear();
 
-	for(unsigned int x = 0; x < buffer_width; x++) {
-		for(unsigned int y = 0; y < buffer_width; y++) {
-			getSamples(x, y, samples, oversampleMap);
-            glm::dvec3 color = getAverageColor(x, y, samples, oversampleMap);
-			//if(debugMode)
-			//	std::cout << "Color of (" << x << ", " << y << ") is (" << color.r << ", " << color.g << ", " << color.b << ")" << std::endl;
-            setPixel(x, y, color);
-		}
-	}
+    for(unsigned int i = 0; i < threads; i++) {
+        std::pair<int, int>range (i* size / threads, (i+1) * size / threads);
+        if(i == threads - 1)
+            range.second = size;
+
+        aaThreadDone.push_back(false);
+        aaThreadRayRange.push_back(range);
+        aaThreadList.push_back(thread(&RayTracer::aaImageThread, this, i, samples));
+    }
+}
+
+void RayTracer::aaImageThread(unsigned int threadIdx, int samples) {
+    std::pair<int, int> range = this->aaThreadRayRange[threadIdx];
+
+    for(int i = range.first; i < range.second; i++) {
+        int x = i / buffer_width;
+        int y = i % buffer_width;
+
+        SampleMap oversampleMap;
+        getSamples(x, y, samples, oversampleMap);
+        glm::dvec3 color = getAverageColor(x, y, samples, oversampleMap);
+        setPixel(x, y, color);
+    }
+
+    aaThreadDone[threadIdx] = true;
 }
 
 // This method gets (sampleLevel + 1)^2 additional samples within the pixel (x,y) pixel.
