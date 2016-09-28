@@ -93,17 +93,19 @@ TextureMap::TextureMap( string filename ) {
 
 glm::dvec3 TextureMap::getMappedValue( const glm::dvec2& coord ) const
 {
-	// YOUR CODE HERE
-	// 
-	// In order to add texture mapping support to the 
-	// raytracer, you need to implement this function.
-	// What this function should do is convert from
-	// parametric space which is the unit square
-	// [0, 1] x [0, 1] in 2-space to bitmap coordinates,
-	// and use these to perform bilinear interpolation
-	// of the values.
+    double x = coord.x * (double)getWidth();
+    double y = coord.y * (double)getHeight();
 
-	return glm::dvec3(1,1,1);
+    int xFloor = (int)x, xCeil = xFloor + 1, yFloor = (int)y, yCeil = yFloor + 1;
+
+	double xLeftDist = x - xFloor, xRightDist = xCeil - x, yBottomDist = y - yFloor, yTopDist = yCeil - y;
+
+    glm::dvec3 xTopInterpolation = xLeftDist*getPixelAt(xFloor, yCeil) + xRightDist*getPixelAt(xCeil, xCeil);
+    glm::dvec3 xBottomInterpolation = xLeftDist*getPixelAt(xFloor, yFloor) + xRightDist*getPixelAt(xCeil, xFloor);
+
+    glm::dvec3 totalInterpolation = yTopDist*xTopInterpolation + yBottomDist*xBottomInterpolation;
+
+	return getPixelAt(xFloor, yFloor);
 }
 
 
