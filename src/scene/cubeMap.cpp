@@ -49,8 +49,6 @@ glm::dvec3 CubeMap::getColor(ray r) const {
         twoDProj = glm::dvec2(proj.x, proj.y);
 
     glm::dvec2 uvCoord = (twoDProj + glm::dvec2(1, 1)) / 2.0;
-    int xCoord = (int)(tMap[minIdx]->getWidth()*uvCoord.x);
-    int yCoord = (int)(tMap[minIdx]->getHeight()*uvCoord.y);
 
-    return tMap[minIdx]->getPixelAt(xCoord, yCoord);
+    return tMap[minIdx]->getMappedValue(uvCoord);
 }
