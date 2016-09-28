@@ -2,7 +2,7 @@
 
 #include "scene.h"
 #include "light.h"
-#include "kdTree.h"
+#include "../kdtree/KdTree.hpp"
 #include "../ui/TraceUI.h"
 #include <glm/gtx/extented_min_max.hpp>
 #include <iostream>

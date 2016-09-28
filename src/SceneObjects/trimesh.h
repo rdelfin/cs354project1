@@ -7,7 +7,7 @@
 #include "../scene/ray.h"
 #include "../scene/material.h"
 #include "../scene/scene.h"
-#include "../scene/kdTree.h"
+#include "../kdtree/KdTree.hpp"
 
 #include <glm/vec3.hpp>
 #include <glm/gtc/matrix_transform.hpp>
