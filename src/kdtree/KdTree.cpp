@@ -36,7 +36,7 @@ void KdTree::construct() {
     setupNode(root, maxIterations);
 }
 
-void KdTree::setupNode(KdNode* node, int iterationsLeft) {
+void KdTree::setupNode(KdNode* node, int iterations) {
 
     BoundingBox childMax = getNextBound(node->objects, node->bounds);
     BoundingBox childMin = remainingBoundingBox(childMax, node->bounds);
@@ -57,11 +57,11 @@ void KdTree::setupNode(KdNode* node, int iterationsLeft) {
     node->left = new KdNode(nullptr, nullptr, childMin);
     node->right = new KdNode(nullptr, nullptr, childMax);
 
-    if(iterationsLeft > 0) {
+    if(iterations > 0) {
         if (node->right->objects.size() > objThreshold)
-            setupNode(node->left, iterationsLeft - 1);
+            setupNode(node->left, iterations - 1);
         if (node->left->objects.size() > objThreshold)
-            setupNode(node->right, iterationsLeft - 1);
+            setupNode(node->right, iterations - 1);
     }
 }
 
