@@ -45,12 +45,18 @@ void KdTree::setupNode(KdNode* node, int iterations) {
     std::vector<Geometry*> leftObj, rightObj;
 
     for(auto it = node->objects.begin(); it != node->objects.end(); ++it) {
-        if(childMax.intersects((*it)->getBoundingBox())) {
-            rightObj.push_back(*it);
+        Geometry* obj = *it;
+
+        // Special case: If object does not have bounding box, it will be left at the root node
+        if(!obj->hasBoundingBoxCapability())
+            continue;
+
+        if(childMax.intersects(obj->getBoundingBox())) {
+            rightObj.push_back(obj);
         }
 
-        if(childMin.intersects((*it)->getBoundingBox())) {
-            leftObj.push_back(*it);
+        if(childMin.intersects(obj->getBoundingBox())) {
+            leftObj.push_back(obj);
         }
     }
 
