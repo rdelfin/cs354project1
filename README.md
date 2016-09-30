@@ -1,3 +1,8 @@
+# On this project and it's features
+Additional features:
+
+- Multithreading
+
 # Getting Started
 
 ## Build
