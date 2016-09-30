@@ -27,6 +27,8 @@ public:
 
     void construct();
 
+    std::vector<Geometry*> intersects(const ray& r);
+
     ~KdTree();
 private:
     BoundingBox getSceneBounds();
@@ -42,6 +44,16 @@ private:
 
     KdNode* root;
 
+
+    std::vector<KdNode*> recursiveIntersects(const ray& r, KdNode* n);
+
+    enum IntersectionType {
+        MIN,
+        MAX,
+        BOTH
+    };
+
+    IntersectionType intersectionSide(const ray& r, BoundingBox total, BoundingBox left, BoundingBox right);
 };
 
 

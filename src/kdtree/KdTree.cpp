@@ -2,6 +2,8 @@
 // Created by rdelfin on 9/27/16.
 //
 
+#include <unordered_map>
+#include <boost/functional/hash.hpp>
 #include "KdTree.hpp"
 
 
@@ -145,6 +147,135 @@ BoundingBox KdTree::remainingBoundingBox(BoundingBox rest, BoundingBox total) {
 
 KdTree::~KdTree() {
     delete root;
+}
+
+std::vector<Geometry*> KdTree::intersects(const ray &r) {
+    // Returns the full list
+    std::vector<KdNode*> nodes = recursiveIntersects(r, root);
+    std::vector<Geometry*> result;
+
+    for(auto it = nodes.begin(); it != nodes.end(); ++it) {
+        KdNode* node = *it;
+
+        for(auto objIt = node->objects.begin(); objIt != node->objects.end(); ++objIt) {
+            Geometry* geometry = *objIt;
+
+            if(std::find(result.begin(), result.end(), geometry) == result.end())
+                result.push_back(geometry);
+        }
+    }
+
+    return result;
+}
+
+std::vector<KdNode*> KdTree::recursiveIntersects(const ray &r, KdNode* n) {
+    if(n->left == nullptr || n->right == nullptr) {
+        return {n};
+    }
+
+
+    BoundingBox b = n->bounds;
+    BoundingBox minBox = n->left->bounds;
+    BoundingBox maxBox = n->right->bounds;
+
+    /** This figures out the five planes used for identifying entry points, exit points, and boxes on which there are
+     *  collisions
+     */
+    IntersectionType type = intersectionSide(r, b, minBox, maxBox);
+
+    if(type == MIN)
+        return recursiveIntersects(r, n->left);
+    if(type == MAX)
+        return recursiveIntersects(r, n->right);
+    if(type == BOTH) {
+        std::vector<KdNode *> left = recursiveIntersects(r, n->left);
+        std::vector<KdNode *> right = recursiveIntersects(r, n->right);
+
+        left.insert(left.end(), right.begin(), right.end());
+
+        return left;
+    }
+}
+
+KdTree::IntersectionType KdTree::intersectionSide(const ray& r, BoundingBox total, BoundingBox minBox, BoundingBox maxBox) {
+    glm::dvec3 splitPlaneN;
+    double splitPlaneD;
+
+    glm::dvec3 aPlaneNormal;
+    double minPlaneAD;
+    double maxPlaneAD;
+
+    glm::dvec3 bPlaneNormal;
+    double minPlaneBD;
+    double maxPlaneBD;
+
+    // Figure out what all the planes are
+    if(minBox.getMax().x != total.getMax().x) {
+        splitPlaneN = glm::dvec3(1, 0, 0);
+        splitPlaneD = minBox.getMax().x;
+
+        aPlaneNormal = glm::dvec3(0, 1, 0);
+        minPlaneAD = total.getMin().y;
+        maxPlaneAD = total.getMax().y;
+
+        bPlaneNormal = glm::dvec3(0, 0, 1);
+        minPlaneBD = total.getMin().z;
+        maxPlaneBD = total.getMax().z;
+    } else if(minBox.getMax().y != total.getMax().y) {
+        splitPlaneN = glm::dvec3(0, 1, 0);
+        splitPlaneD = minBox.getMax().y;
+
+        aPlaneNormal = glm::dvec3(1, 0, 0);
+        minPlaneAD = total.getMin().x;
+        maxPlaneAD = total.getMax().x;
+
+        bPlaneNormal = glm::dvec3(0, 0, 1);
+        minPlaneBD = total.getMin().z;
+        maxPlaneBD = total.getMax().z;
+
+    } else if(minBox.getMax().z != total.getMax().z) {
+        splitPlaneN = glm::dvec3(0, 0, 1);
+        splitPlaneD = minBox.getMax().z;
+
+        aPlaneNormal = glm::dvec3(1, 0, 0);
+        minPlaneAD = total.getMin().x;
+        maxPlaneAD = total.getMax().x;
+
+        bPlaneNormal = glm::dvec3(0, 1, 0);
+        minPlaneBD = total.getMin().y;
+        maxPlaneBD = total.getMax().y;
+    }
+
+    // Find intersection with all planes
+    double splitT = (splitPlaneD - glm::dot(splitPlaneN, r.p)) / glm::dot(splitPlaneN, r.d);
+    double minAT = (minPlaneAD - glm::dot(aPlaneNormal, r.p)) / glm::dot(aPlaneNormal, r.d);
+    double maxAT = (maxPlaneAD - glm::dot(aPlaneNormal, r.p)) / glm::dot(aPlaneNormal, r.d);
+    double minBT = (minPlaneBD - glm::dot(bPlaneNormal, r.p)) / glm::dot(bPlaneNormal, r.d);
+    double maxBT = (maxPlaneBD - glm::dot(bPlaneNormal, r.p)) / glm::dot(bPlaneNormal, r.d);
+
+    // Indentify which intersections come first in each pair of parallel planes
+    bool minAFirst = minAT < maxAT;
+    bool minBFirst = minBT < maxBT;
+
+    // Name said plane intersactions
+    double nearBT = minBFirst ? minBT : maxBT;
+    double nearAT = minAFirst ? minAT : maxAT;
+    double farBT = minBFirst ? maxBT : minBT;
+    double farAT = minAFirst ? maxAT : minAT;
+
+    // Identify which intersections identify entry and exit points
+    double nearT = nearAT > nearBT ? nearAT : nearBT;
+    double farT = farAT > farBT ? farBT : farAT;
+
+    if(nearT < splitT && splitT < farT)
+        return BOTH;
+    else {
+        glm::dvec3 pos = r.at(farT + (farT - nearT) / 2.0);
+        if(pos.x <  minBox.getMax().x && pos.y < minBox.getMax().y && pos.z < minBox.getMax().z)
+            return MIN;
+        else
+            return MAX;
+    }
 }
 
 
