@@ -105,8 +105,18 @@ bool Scene::intersect(ray& r, isect& i) const {
 	double tmin = 0.0;
 	double tmax = 0.0;
 	bool have_one = false;
-	typedef vector<Geometry*>::const_iterator iter;
-	for(iter j = objects.begin(); j != objects.end(); ++j) {
+
+    typedef vector<Geometry*>::const_iterator iter; 
+    std::vector<Geometry *> obj;
+
+    if(kdtree == nullptr)
+        obj = objects;
+    else
+        obj = kdtree->intersects(r);
+
+    std::cout << "Using " << obj.size() << "/" << objects.size() << " objects" << std::endl;
+
+	for(iter j = obj.begin(); j != obj.end(); ++j) {
 		isect cur;
 		if( (*j)->intersect(r, cur) ) {
 			if(!have_one || (cur.t < i.t)) {
