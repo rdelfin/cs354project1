@@ -5,7 +5,7 @@
 #include "KdTree.hpp"
 
 
-KdNode::KdNode(KdNode *left, KdNode *right, BoundingBox bounds)
+KdNode:: KdNode(KdNode *left, KdNode *right, BoundingBox bounds)
         :left(left), right(right), bounds(bounds) {
 
 }
@@ -107,25 +107,31 @@ BoundingBox KdTree::remainingBoundingBox(BoundingBox rest, BoundingBox total) {
         else if(result.getMin().y != total.getMin().y) {
             result.setMax(glm::dvec3(rest.getMax().x, rest.getMin().y, rest.getMax().z));
         }
-        else if(result.getMin().z != result.getMax().z) {
+        else if(result.getMin().z != total.getMin().z) {
             result.setMax(glm::dvec3(rest.getMax().x, rest.getMax().y, rest.getMin().z));
+        } else {
+            return BoundingBox();
         }
 
         return result;
 
     } else if(rest.getMin() == total.getMin()) {
-        /*BoundingBox result;
-        result.setMax(total.getMin());
+        BoundingBox result;
+        result.setMax(total.getMax());
 
-        if(result.getMin().x != total.getMin().x) {
-            result.setMax(glm::dvec3(rest.getMin().x, rest.getMax().y, rest.getMax().z));
+        if(result.getMax().x != total.getMax().x) {
+            result.setMax(glm::dvec3(rest.getMax().x, rest.getMin().y, rest.getMin().z));
         }
         else if(result.getMin().y != total.getMin().y) {
-            result.setMax(glm::dvec3(rest.getMax().x, rest.getMin().y, rest.getMax().z));
+            result.setMax(glm::dvec3(rest.getMin().x, rest.getMax().y, rest.getMin().z));
         }
         else if(result.getMin().z != result.getMax().z) {
-            result.setMax(glm::dvec3(rest.getMax().x, rest.getMax().y, rest.getMin().z));
-        }*/
+            result.setMax(glm::dvec3(rest.getMin().x, rest.getMin().y, rest.getMax().z));
+        } else {
+            return BoundingBox();
+        }
+
+        return result;
     }
 
     return BoundingBox();
