@@ -66,14 +66,17 @@ int CommandLineUI::run()
 		int width = m_nSize;
 		int height = (int)(width / raytracer->aspectRatio() + 0.5);
 
-		raytracer->traceSetup( width, height );
+		//raytracer->traceSetup( width, height );
 
 		clock_t start, end;
 		start = clock();
 
-		for( int j = 0; j < height; ++j )
-			for( int i = 0; i < width; ++i )
-				raytracer->tracePixel(i,j,0);
+		//for( int j = 0; j < height; ++j )
+		//	for( int i = 0; i < width; ++i )
+		//		raytracer->tracePixel(i,j,0);
+                raytracer->setThreads(8);
+                raytracer->traceImage(width, height, 4, 0.001);
+                while(!raytracer->checkRender());
 
 		end=clock();
 
