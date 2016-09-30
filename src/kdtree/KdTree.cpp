@@ -88,12 +88,46 @@ BoundingBox KdTree::getSceneBounds() {
 
 
 BoundingBox KdTree::getNextBound(std::vector<Geometry *> objects, BoundingBox bounds) {
-    //TODO: implement
-    return BoundingBox();
+    BoundingBox result;
+    result.setMax(bounds.getMax());
+    result.setMin(glm::dvec3(bounds.getMax().x + (bounds.getMax().x - bounds.getMin().x) / 2.0,
+                             bounds.getMax().y,
+                             bounds.getMax().z));
+    return result;
 }
 
 BoundingBox KdTree::remainingBoundingBox(BoundingBox rest, BoundingBox total) {
-    //TODO: Implement
+    if(rest.getMax() == total.getMax()) {
+        BoundingBox result;
+        result.setMin(total.getMin());
+
+        if(result.getMin().x != total.getMin().x) {
+            result.setMax(glm::dvec3(rest.getMin().x, rest.getMax().y, rest.getMax().z));
+        }
+        else if(result.getMin().y != total.getMin().y) {
+            result.setMax(glm::dvec3(rest.getMax().x, rest.getMin().y, rest.getMax().z));
+        }
+        else if(result.getMin().z != result.getMax().z) {
+            result.setMax(glm::dvec3(rest.getMax().x, rest.getMax().y, rest.getMin().z));
+        }
+
+        return result;
+
+    } else if(rest.getMin() == total.getMin()) {
+        /*BoundingBox result;
+        result.setMax(total.getMin());
+
+        if(result.getMin().x != total.getMin().x) {
+            result.setMax(glm::dvec3(rest.getMin().x, rest.getMax().y, rest.getMax().z));
+        }
+        else if(result.getMin().y != total.getMin().y) {
+            result.setMax(glm::dvec3(rest.getMax().x, rest.getMin().y, rest.getMax().z));
+        }
+        else if(result.getMin().z != result.getMax().z) {
+            result.setMax(glm::dvec3(rest.getMax().x, rest.getMax().y, rest.getMin().z));
+        }*/
+    }
+
     return BoundingBox();
 }
 
