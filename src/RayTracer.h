@@ -109,7 +109,13 @@ private:
     std::vector<bool> threadDone;
     std::vector<std::pair<int, int>> threadRayRange;
 
+
+    std::vector<std::thread> aaThreadList;
+    std::vector<bool> aaThreadDone;
+    std::vector<std::pair<int, int>> aaThreadRayRange;
+
     void traceThread(unsigned int threadIdx);
+	void aaImageThread(unsigned int threadIdx, int samples);
 
 public:
 	unsigned char *buffer;
