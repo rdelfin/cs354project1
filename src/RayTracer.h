@@ -7,6 +7,7 @@
 
 #include "scene/ray.h"
 #include "scene/cubeMap.h"
+#include "kdtree/KdTree.hpp"
 #include <time.h>
 #include <thread>
 #include <queue>
@@ -71,6 +72,14 @@ public:
         cubemap = m;
     }
 
+    void enableKdTree() { kdTreeEnabled = true; }
+
+    void disableKdTree() { kdTreeEnabled = false; }
+
+    void setKdTreeDepth(int depth) { kdTreeDepth = depth; }
+
+    void setKdTreeLeafSize(int size) { kdTreeLeafSize = size; }
+
     bool loadScene(char *fn);
 
     bool sceneLoaded() { return scene != 0; }
@@ -84,6 +93,12 @@ public:
     const Scene &getScene() { return *scene; }
 
     CubeMap *getCubeMap() { return cubemap; }
+
+    bool isKdTreeEnabled() { return kdTreeEnabled; }
+
+    int getKdTreeDepth() { return kdTreeDepth; }
+
+    int getKdTreeLeafSize() { return kdTreeLeafSize; }
 
 private:
     void getSamples(int x, int y, int sampleLevel, SampleMap &oversampleMap);
@@ -109,6 +124,11 @@ public:
 
 	bool m_bBufferReady;
 	bool stopTrace;
+
+	KdTree* kdtree;
+	bool kdTreeEnabled;
+	int kdTreeDepth;
+    int kdTreeLeafSize;
 
 };
 

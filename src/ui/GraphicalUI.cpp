@@ -175,12 +175,16 @@ void GraphicalUI::cb_aaThresholdSlides(Fl_Widget* o, void* v)
 
 void GraphicalUI::cb_kdTreeDepthSlides(Fl_Widget* o, void* v)
 {
-	((GraphicalUI*)(o->user_data()))->m_nTreeDepth=int( ((Fl_Slider *)o)->value() ) ;
+	pUI=(GraphicalUI*)(o->user_data());
+	pUI->m_nTreeDepth=int( ((Fl_Slider *)o)->value() ) ;
+	pUI->raytracer->setKdTreeDepth(pUI->m_nTreeDepth);
 }
 
 void GraphicalUI::cb_kdLeafSizeSlides(Fl_Widget* o, void* v)
 {
-	((GraphicalUI*)(o->user_data()))->m_nLeafSize=int( ((Fl_Slider *)o)->value() ) ;
+	pUI=(GraphicalUI*)(o->user_data());
+	pUI->m_nLeafSize=int( ((Fl_Slider *)o)->value() ) ;
+	pUI->raytracer->setKdTreeLeafSize(pUI->m_nLeafSize);
 }
 
 void GraphicalUI::cb_filterSlides(Fl_Widget* o, void* v)
@@ -245,11 +249,13 @@ void GraphicalUI::cb_kdCheckButton(Fl_Widget* o, void* v)
 	pUI->m_kdTree = (((Fl_Check_Button*)o)->value() == 1);
 	if (pUI->m_kdTree) 
 	{
+		pUI->raytracer->enableKdTree();
 		pUI->m_treeDepthSlider->activate();
 		pUI->m_leafSizeSlider->activate();
 	}
 	else
 	{
+		pUI->raytracer->disableKdTree();
 		pUI->m_treeDepthSlider->deactivate();
 		pUI->m_leafSizeSlider->deactivate();
 	}

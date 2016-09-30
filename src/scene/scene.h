@@ -162,14 +162,14 @@ public:
 class SceneObject : public Geometry {
 
  public:
-  virtual const Material& getMaterial() const = 0;
-  virtual void setMaterial(Material *m) = 0;
+    virtual const Material& getMaterial() const = 0;
+    virtual void setMaterial(Material *m) = 0;
 
-  void glDraw(int quality, bool actualMaterials, bool actualTextures) const;
+    void glDraw(int quality, bool actualMaterials, bool actualTextures) const;
 
  protected:
- SceneObject( Scene *scene )
-   : Geometry( scene ) {}
+    SceneObject( Scene *scene )
+        : Geometry( scene ) {}
 };
 
 // A simple extension of SceneObject that adds an instance of Material
@@ -177,89 +177,90 @@ class SceneObject : public Geometry {
 class MaterialSceneObject : public SceneObject {
 
 public:
-  virtual ~MaterialSceneObject() { delete material; }
+    virtual ~MaterialSceneObject() { delete material; }
 
-  virtual const Material& getMaterial() const { return *material; }
-  virtual void setMaterial(Material* m)	{ delete material; material = m; }
+    virtual const Material& getMaterial() const { return *material; }
+    virtual void setMaterial(Material* m)	{ delete material; material = m; }
 
 protected:
- MaterialSceneObject(Scene *scene, Material *mat) 
-   : SceneObject(scene), material(mat) {}
+    MaterialSceneObject(Scene *scene, Material *mat)
+        : SceneObject(scene), material(mat) {}
 
-  Material* material;
+    Material* material;
 };
 
 class Scene {
 
 public:
-  typedef std::vector<Light*>::iterator	liter;
-  typedef std::vector<Light*>::const_iterator cliter;
-  typedef std::vector<Geometry*>::iterator giter;
-  typedef std::vector<Geometry*>::const_iterator cgiter;
+    typedef std::vector<Light*>::iterator	liter;
+    typedef std::vector<Light*>::const_iterator cliter;
+    typedef std::vector<Geometry*>::iterator giter;
+    typedef std::vector<Geometry*>::const_iterator cgiter;
 
-  TransformRoot transformRoot;
+    TransformRoot transformRoot;
 
-  Scene() : transformRoot(), objects(), lights() {}
-  virtual ~Scene();
+    Scene() : transformRoot(), objects(), lights() {}
+    virtual ~Scene();
 
-  void add( Geometry* obj ) {
+    void add( Geometry* obj ) {
     obj->ComputeBoundingBox();
-	sceneBounds.merge(obj->getBoundingBox());
+    sceneBounds.merge(obj->getBoundingBox());
     objects.push_back(obj);
-  }
-  void add(Light* light) { lights.push_back(light); }
+    }
+    void add(Light* light) { lights.push_back(light); }
 
-  bool intersect(ray& r, isect& i) const;
+    bool intersect(ray& r, isect& i) const;
 
-  std::vector<Light*>::const_iterator beginLights() const { return lights.begin(); }
-  std::vector<Light*>::const_iterator endLights() const { return lights.end(); }
+    std::vector<Light*>::const_iterator beginLights() const { return lights.begin(); }
+    std::vector<Light*>::const_iterator endLights() const { return lights.end(); }
 
-  std::vector<Geometry*>::const_iterator beginObjects() const { return objects.begin(); }
-  std::vector<Geometry*>::const_iterator endObjects() const { return objects.end(); }
-        
-  const Camera& getCamera() const { return camera; }
-  Camera& getCamera() { return camera; }
+    std::vector<Geometry*>::const_iterator beginObjects() const { return objects.begin(); }
+    std::vector<Geometry*>::const_iterator endObjects() const { return objects.end(); }
 
-  // For efficiency reasons, we'll store texture maps in a cache
-  // in the Scene.  This makes sure they get deleted when the scene
-  // is destroyed.
-  TextureMap* getTexture( string name );
+    const Camera& getCamera() const { return camera; }
+    Camera& getCamera() { return camera; }
 
-  // These two functions are for handling ambient light; in the Phong model,
-  // the "ambient" light is considered a property of the _scene_ as a whole
-  // and hence should be set here.
-  glm::dvec3 ambient() const	{ return ambientIntensity; }
-  void addAmbient( const glm::dvec3& ambient ) { ambientIntensity += ambient; }
+    // For efficiency reasons, we'll store texture maps in a cache
+    // in the Scene.  This makes sure they get deleted when the scene
+    // is destroyed.
+    TextureMap* getTexture( string name );
 
-  void glDraw(int quality, bool actualMaterials, bool actualTextures) const;
+    // These two functions are for handling ambient light; in the Phong model,
+    // the "ambient" light is considered a property of the _scene_ as a whole
+    // and hence should be set here.
+    glm::dvec3 ambient() const	{ return ambientIntensity; }
+    void addAmbient( const glm::dvec3& ambient ) { ambientIntensity += ambient; }
 
-  const BoundingBox& bounds() const { return sceneBounds; }
+    void glDraw(int quality, bool actualMaterials, bool actualTextures) const;
 
+    const BoundingBox& bounds() const { return sceneBounds; }
+
+    void setKdTree(KdTree* kdTree);
 
  private:
-  std::vector<Geometry*> objects;
-  std::vector<Geometry*> nonboundedobjects;
-  std::vector<Geometry*> boundedobjects;
-  std::vector<Light*> lights;
-  Camera camera;
+    std::vector<Geometry*> objects;
+    std::vector<Geometry*> nonboundedobjects;
+    std::vector<Geometry*> boundedobjects;
+    std::vector<Light*> lights;
+    Camera camera;
 
-  // This is the total amount of ambient light in the scene
-  // (used as the I_a in the Phong shading model)
-  glm::dvec3 ambientIntensity;
+    // This is the total amount of ambient light in the scene
+    // (used as the I_a in the Phong shading model)
+    glm::dvec3 ambientIntensity;
 
-  typedef std::map< std::string, TextureMap* > tmap;
-  tmap textureCache;
-	
-  // Each object in the scene, provided that it has hasBoundingBoxCapability(),
-  // must fall within this bounding box.  Objects that don't have hasBoundingBoxCapability()
-  // are exempt from this requirement.
-  BoundingBox sceneBounds;
-  
-  KdTree* kdtree;
+    typedef std::map< std::string, TextureMap* > tmap;
+    tmap textureCache;
+
+    // Each object in the scene, provided that it has hasBoundingBoxCapability(),
+    // must fall within this bounding box.  Objects that don't have hasBoundingBoxCapability()
+    // are exempt from this requirement.
+    BoundingBox sceneBounds;
+
+    KdTree* kdtree;
 
  public:
-  // This is used for debugging purposes only.
-  mutable std::vector<std::pair<ray*, isect*>> intersectCache;
+    // This is used for debugging purposes only.
+    mutable std::vector<std::pair<ray*, isect*>> intersectCache;
 };
 
 #endif // __SCENE_H__

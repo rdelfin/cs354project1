@@ -139,7 +139,7 @@ glm::dvec3 RayTracer::traceRay(ray& r, const glm::dvec3& thresh, int depth, doub
 }
 
 RayTracer::RayTracer()
-	: scene(0), buffer(0), thresh(0), buffer_width(256), buffer_height(256), m_bBufferReady(false), cubemap (0)
+	: scene(0), buffer(0), thresh(0), buffer_width(256), buffer_height(256), m_bBufferReady(false), cubemap (0), kdtree(nullptr)
 {
 }
 
@@ -147,6 +147,10 @@ RayTracer::~RayTracer()
 {
 	delete scene;
 	delete [] buffer;
+
+    if(kdtree != nullptr)
+    delete kdtree;
+
 }
 
 void RayTracer::getBuffer( unsigned char *&buf, int &w, int &h )
@@ -218,6 +222,18 @@ void RayTracer::traceSetup(int w, int h)
 	}
 	memset(buffer, 0, w*h*3);
 	m_bBufferReady = true;
+
+
+    // KD Tree construction and setup
+    if(kdtree != nullptr)
+        delete kdtree;
+
+    if(isKdTreeEnabled()) {
+        kdtree = new KdTree(scene, getKdTreeLeafSize(), getKdTreeDepth());
+        kdtree->construct();
+        scene->setKdTree(kdtree);
+    } else
+        scene->setKdTree(nullptr);
 }
 
 void RayTracer::traceImage(int w, int h, int bs, double thresh)

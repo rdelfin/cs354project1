@@ -129,4 +129,7 @@ TextureMap* Scene::getTexture(string name) {
 	} else return (*itr).second;
 }
 
+void Scene::setKdTree(KdTree *kdTree) {
+	this->kdtree = kdTree;
+}
 
