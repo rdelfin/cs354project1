@@ -67,6 +67,10 @@ int CommandLineUI::run()
 		int height = (int)(width / raytracer->aspectRatio() + 0.5);
 
 		raytracer->traceSetup( width, height );
+        //raytracer->enableKdTree();
+        //raytracer->setKdTreeDepth(10);
+        //raytracer->setKdTreeLeafSize(10);
+        //raytracer->setThreads(8);
 
 		clock_t start, end;
 		start = clock();
@@ -74,6 +78,8 @@ int CommandLineUI::run()
 		for( int j = 0; j < height; ++j )
 			for( int i = 0; i < width; ++i )
 				raytracer->tracePixel(i,j,0);
+		//raytracer->traceImage(width, height, 10, 0.0001);
+		//while(!raytracer->checkRender());
 
 		end=clock();
 
@@ -86,8 +92,8 @@ int CommandLineUI::run()
 			writeBMP(imgName, width, height, buf);
 
 		double t=(double)(end-start)/CLOCKS_PER_SEC;
-//		int totalRays = TraceUI::resetCount();
-//		std::cout << "total time = " << t << " seconds, rays traced = " << totalRays << std::endl;
+		int totalRays = TraceUI::resetCount();
+		std::cout << "total time = " << t << " seconds, rays traced = " << totalRays << std::endl;
         return 0;
 	}
 	else
